@@ -27,6 +27,13 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
+    const postCollection=client.db('chatSphere').collection('posts')
+
+    //get all post
+    app.get('/post',async(req,res)=>{
+      const result=await postCollection.find().sort({time:-1}).toArray()
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
