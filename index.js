@@ -1,15 +1,19 @@
 const express = require("express");
 const app = express();
-const cors = require("cors");
 require("dotenv").config();
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const port = process.env.port || 5000;
 
 // middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(
   cors({
     origin: ["http://localhost:5173"],
     credentials: true,
+    optionSuccessStatus: 200,
   })
 );
 
@@ -30,6 +34,33 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     const postCollection = client.db("chatSphere").collection("posts");
     const commentsCollection = client.db("chatSphere").collection("comments");
+
+    //jwt generate
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRETE, {
+        expiresIn: "365d",
+      });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
+
+    //clear token on logout
+    app.get("/logout", (req, res) => {
+      res
+        .clearCookie("token", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+          maxAge: 0,
+        })
+        .send({ success: true });
+    });
 
     //get all post sort by date
     app.get("/posts", async (req, res) => {
