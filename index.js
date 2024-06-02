@@ -29,6 +29,23 @@ const client = new MongoClient(uri, {
   },
 });
 
+// Verify Token Middleware
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+  console.log(token);
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      console.log(err);
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -86,7 +103,7 @@ async function run() {
     });
 
     //save comment in the database
-    app.post("/comment", async (req, res) => {
+    app.post("/comment", verifyToken, async (req, res) => {
       const comment = req.body;
       const result = await commentsCollection.insertOne(comment);
       res.send(result);
