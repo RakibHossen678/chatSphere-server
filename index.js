@@ -51,6 +51,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     const postCollection = client.db("chatSphere").collection("posts");
     const commentsCollection = client.db("chatSphere").collection("comments");
+    const usersCollection = client.db("chatSphere").collection("users");
 
     //jwt generate
     app.post("/jwt", async (req, res) => {
@@ -113,19 +114,61 @@ async function run() {
     app.patch("/post/upVote/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $inc: { upVote: 1 },
-      };
+      const getVote = await postCollection.findOne(
+        {},
+        {
+          projection: {
+            downVote: 1,
+          },
+        }
+      );
+      let updateDoc;
+
+      if (getVote.downVote >= 1) {
+        updateDoc = {
+          $inc: { upVote: 1, downVote: -1 },
+        };
+      } else {
+        updateDoc = {
+          $inc: { upVote: 1 },
+        };
+      }
       const result = await postCollection.updateOne(query, updateDoc);
       res.send(result);
     });
     app.patch("/post/downVote/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $inc: { downVote: 1 },
-      };
+      const getVote = await postCollection.findOne(
+        {},
+        {
+          projection: {
+            upVote: 1,
+          },
+        }
+      );
+      let updateDoc;
+      if (getVote.upVote >= 1) {
+        updateDoc = {
+          $inc: { downVote: 1, upVote: -1 },
+        };
+      } else {
+        updateDoc = {
+          $inc: { downVote: 1 },
+        };
+      }
       const result = await postCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+    //save user in database
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = { email: user?.email };
+      const isExists = await usersCollection.findOne(query);
+      if (isExists) {
+        return res.send({ message: "user already exists", insertedId: null });
+      }
+      const result = await usersCollection.insertOne(user);
       res.send(result);
     });
     //get comment by title
