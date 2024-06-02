@@ -1,33 +1,21 @@
 const express = require("express");
 const app = express();
 require("dotenv").config();
-const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const port = process.env.port || 5000;
 
 // middleware
+const corsOptions = {
+  origin: ["http://localhost:5173", "http://localhost:5174"],
+  credentials: true,
+  optionSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: ["http://localhost:5173"],
-    credentials: true,
-    optionSuccessStatus: 200,
-  })
-);
-
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.vrdje6l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
 
 // Verify Token Middleware
 const verifyToken = async (req, res, next) => {
@@ -46,6 +34,18 @@ const verifyToken = async (req, res, next) => {
   });
 };
 
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.vrdje6l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -56,7 +56,7 @@ async function run() {
     //jwt generate
     app.post("/jwt", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRETE, {
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "365d",
       });
       res
@@ -81,17 +81,15 @@ async function run() {
     });
 
     //save post in database
-    // app.post('/post',verifyToken,async(req,res)=>{
-    //   const postData=req.body
-    //   console.log(postData)
-    //   return
-    //   // const badge=await usersCollection.findOne()
-    // })
+    app.post("/post", verifyToken, async (req, res) => {
+      const postData = req.body;
+      const result = await postCollection.insertOne(postData);
+      res.send(result);
+    });
 
     app.get("/badge/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
-      console.log(query);
       const badge = await usersCollection.findOne(query, {
         projection: {
           badge: 1,
@@ -136,17 +134,14 @@ async function run() {
     app.patch("/post/upVote/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const getVote = await postCollection.findOne(
-        {},
-        {
-          projection: {
-            downVote: 1,
-          },
-        }
-      );
+      const getVote = await postCollection.findOne(query, {
+        projection: {
+          downVote: 1,
+          upVote: 1,
+        },
+      });
       let updateDoc;
-
-      if (getVote.downVote >= 1) {
+      if (getVote.downVote > 0) {
         updateDoc = {
           $inc: { upVote: 1, downVote: -1 },
         };
@@ -161,16 +156,14 @@ async function run() {
     app.patch("/post/downVote/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const getVote = await postCollection.findOne(
-        {},
-        {
-          projection: {
-            upVote: 1,
-          },
-        }
-      );
+      const getVote = await postCollection.findOne(query, {
+        projection: {
+          upVote: 1,
+          downVote: 1,
+        },
+      });
       let updateDoc;
-      if (getVote.upVote >= 1) {
+      if (getVote.upVote > 0) {
         updateDoc = {
           $inc: { downVote: 1, upVote: -1 },
         };
