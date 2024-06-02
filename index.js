@@ -80,6 +80,28 @@ async function run() {
         .send({ success: true });
     });
 
+    //save post in database
+    // app.post('/post',verifyToken,async(req,res)=>{
+    //   const postData=req.body
+    //   console.log(postData)
+    //   return
+    //   // const badge=await usersCollection.findOne()
+    // })
+
+    app.get("/badge/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      console.log(query);
+      const badge = await usersCollection.findOne(query, {
+        projection: {
+          badge: 1,
+          _id: 0,
+        },
+      });
+      const postCount = await postCollection.estimatedDocumentCount(query);
+      res.send({ badge, postCount });
+    });
+
     //get all post sort by date
     app.get("/posts", async (req, res) => {
       const posts = await postCollection.find().sort({ time: -1 }).toArray();
