@@ -90,13 +90,16 @@ async function run() {
     app.get("/badge/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
+      const postQuery = { "author.email": email };
+      console.log(email);
       const badge = await usersCollection.findOne(query, {
         projection: {
           badge: 1,
           _id: 0,
         },
       });
-      const postCount = await postCollection.estimatedDocumentCount(query);
+      const postCount = await postCollection.countDocuments(postQuery);
+      console.log(postCount);
       res.send({ badge, postCount });
     });
 
@@ -184,6 +187,40 @@ async function run() {
         return res.send({ message: "user already exists", insertedId: null });
       }
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+    //get user
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await usersCollection.findOne({ email: email });
+      res.send(result);
+    });
+
+    //get post by email
+    app.get("/posts/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { "author.email": email };
+      const posts = await postCollection
+        .find(query)
+        .sort({ time: -1 })
+        .toArray();
+      const postsWithComments = await Promise.all(
+        posts.map(async (post) => {
+          const commentsCount = await commentsCollection.countDocuments({
+            postTitle: post.title,
+          });
+          return { ...post, commentsCount };
+        })
+      );
+      res.send(postsWithComments);
+    });
+
+    //delete post by id
+
+    app.delete("/post/delete/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await postCollection.deleteOne(query);
       res.send(result);
     });
     //get comment by title
