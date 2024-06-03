@@ -122,6 +122,8 @@ async function run() {
     app.get("/post/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
+      // console.log(query)
+      // return
       const result = await postCollection.findOne(query);
       res.send(result);
     });
@@ -224,15 +226,15 @@ async function run() {
       res.send(result);
     });
     //get comment by title
-    // app.get("/comment/:title", async (req, res) => {
-    //   const title = req.params.title;
-    //   const query = { postTitle: title };
-    //   const result = await commentsCollection.find(query).toArray();
-    //   res.send(result);
-    // });
+    app.get("/comment/:title", async (req, res) => {
+      const title = req.params.title;
+      const query = { postTitle: title };
+      const result = await commentsCollection.find(query).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
