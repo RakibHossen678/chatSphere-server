@@ -52,6 +52,9 @@ async function run() {
     const postCollection = client.db("chatSphere").collection("posts");
     const commentsCollection = client.db("chatSphere").collection("comments");
     const usersCollection = client.db("chatSphere").collection("users");
+    const announcementsCollection = client
+      .db("chatSphere")
+      .collection("announcements");
 
     //jwt generate
     app.post("/jwt", async (req, res) => {
@@ -184,6 +187,7 @@ async function run() {
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user?.email };
+      console.log(req.body);
       const isExists = await usersCollection.findOne(query);
       if (isExists) {
         return res.send({ message: "user already exists", insertedId: null });
@@ -238,6 +242,27 @@ async function run() {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
+    //change role
+    app.patch("/user/role/:id", async (req, res) => {
+      const id = req.params.id;
+      const role = req.body.role;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: role,
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    //save announcement in db
+
+    app.post('/announcement',async(req,res)=>{
+      const announcementData=req.body
+      const result=await announcementsCollection.insertOne(announcementData)
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
 
