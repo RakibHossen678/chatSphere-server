@@ -4,6 +4,7 @@ require("dotenv").config();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.VITE_STRIPE_SECRET_KEY);
 const port = process.env.port || 5000;
 
 // middleware
@@ -258,11 +259,35 @@ async function run() {
 
     //save announcement in db
 
-    app.post('/announcement',async(req,res)=>{
-      const announcementData=req.body
-      const result=await announcementsCollection.insertOne(announcementData)
-      res.send(result)
-    })
+    app.post("/announcement", async (req, res) => {
+      const announcementData = req.body;
+      const result = await announcementsCollection.insertOne(announcementData);
+      res.send(result);
+    });
+
+    //get announcement
+
+    app.get("/announcement", async (req, res) => {
+      const result = await announcementsCollection.find().toArray();
+      res.send(result);
+    });
+
+    //payment
+    app.post("/create-payment-intent", verifyToken, async (req, res) => {
+      const price = req.body.price;
+      const priceInCent = parseFloat(price) * 100;
+
+      if (!price || priceInCent < 1) return;
+      const { client_secret } = await stripe.paymentIntents.create({
+        amount: priceInCent,
+        currency: "usd",
+
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+      res.send({ clientSecret: client_secret });
+    });
 
     // Send a ping to confirm a successful connection
 
