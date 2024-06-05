@@ -241,7 +241,13 @@ async function run() {
 
     //get a user
     app.get("/users", async (req, res) => {
-      const result = await usersCollection.find().toArray();
+      const size = parseFloat(req.query.size);
+      const page = parseFloat(req.query.page)-1;
+      const result = await usersCollection
+        .find()
+        .skip(page * size)
+        .limit(size)
+        .toArray();
       res.send(result);
     });
     //change role
@@ -302,6 +308,12 @@ async function run() {
       };
       const updatedRoom = await usersCollection.updateOne(query, updateDoc);
       res.send(result);
+    });
+
+    //get data count
+    app.get("/usersCount", async (req, res) => {
+      const count = await usersCollection.countDocuments();
+      res.send({ count });
     });
 
     // Send a ping to confirm a successful connection
