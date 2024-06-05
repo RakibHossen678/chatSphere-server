@@ -345,6 +345,13 @@ async function run() {
       res.send({ totalUsers, totalPosts, totalComments, payments });
     });
 
+    //save tag in db
+    app.post("/tags", async (req, res) => {
+      const tag = req.body;
+      const result = await CategoriesCollection.insertOne(tag);
+      res.send(result);
+    });
+
     //get category
     app.get("/categories", async (req, res) => {
       const result = await CategoriesCollection.find().toArray();
