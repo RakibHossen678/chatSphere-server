@@ -53,6 +53,9 @@ async function run() {
     const postCollection = client.db("chatSphere").collection("posts");
     const commentsCollection = client.db("chatSphere").collection("comments");
     const usersCollection = client.db("chatSphere").collection("users");
+    const CategoriesCollection = client
+      .db("chatSphere")
+      .collection("Categories");
     const announcementsCollection = client
       .db("chatSphere")
       .collection("announcements");
@@ -340,6 +343,12 @@ async function run() {
       const totalComments = await commentsCollection.countDocuments();
       const payments = await paymentsCollection.countDocuments();
       res.send({ totalUsers, totalPosts, totalComments, payments });
+    });
+
+    //get category
+    app.get("/categories", async (req, res) => {
+      const result = await CategoriesCollection.find().toArray();
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
