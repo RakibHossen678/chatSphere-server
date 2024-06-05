@@ -56,6 +56,7 @@ async function run() {
     const announcementsCollection = client
       .db("chatSphere")
       .collection("announcements");
+    const paymentsCollection = client.db("chatSphere").collection("payments");
 
     //jwt generate
     app.post("/jwt", async (req, res) => {
@@ -287,6 +288,20 @@ async function run() {
         },
       });
       res.send({ clientSecret: client_secret });
+    });
+
+    //save payment
+    app.post("/payment", verifyToken, async (req, res) => {
+      const paymentData = req.body;
+      const result = await paymentsCollection.insertOne(paymentData);
+      //change user badge
+      const email = paymentData.email;
+      const query = { email: email };
+      const updateDoc = {
+        $set: { badge: "gold" },
+      };
+      const updatedRoom = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
