@@ -242,9 +242,18 @@ async function run() {
     //get a user
     app.get("/users", async (req, res) => {
       const size = parseFloat(req.query.size);
-      const page = parseFloat(req.query.page)-1;
+      const page = parseFloat(req.query.page) - 1;
+      const search = req.query.search || "";
+
+      console.log(search);
+
+      const query = {
+        name: { $regex: search, $options: "i" },
+      };
+      console.log(query);
+      console.log(query);
       const result = await usersCollection
-        .find()
+        .find(query)
         .skip(page * size)
         .limit(size)
         .toArray();
@@ -312,7 +321,15 @@ async function run() {
 
     //get data count
     app.get("/usersCount", async (req, res) => {
-      const count = await usersCollection.countDocuments();
+      const search = req.query.search || "";
+
+      console.log(search);
+
+      const query = {
+        name: { $regex: search, $options: "i" },
+      };
+
+      const count = await usersCollection.countDocuments(query);
       res.send({ count });
     });
 
