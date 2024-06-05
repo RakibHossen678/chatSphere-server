@@ -333,6 +333,15 @@ async function run() {
       res.send({ count });
     });
 
+    //get admin data
+    app.get("/admin-stats", async (req, res) => {
+      const totalUsers = await usersCollection.countDocuments();
+      const totalPosts = await postCollection.countDocuments();
+      const totalComments = await commentsCollection.countDocuments();
+      const payments = await paymentsCollection.countDocuments();
+      res.send({ totalUsers, totalPosts, totalComments, payments });
+    });
+
     // Send a ping to confirm a successful connection
 
     console.log(
