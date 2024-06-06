@@ -60,6 +60,7 @@ async function run() {
       .db("chatSphere")
       .collection("announcements");
     const paymentsCollection = client.db("chatSphere").collection("payments");
+    const reportsCollection = client.db("chatSphere").collection("reports");
 
     //jwt generate
     app.post("/jwt", async (req, res) => {
@@ -358,6 +359,15 @@ async function run() {
       res.send(result);
     });
 
+    //save report data in bd
+
+    app.post("/reports", async (req, res) => {
+      const reportData = req.body;
+      const result = await reportsCollection.insertOne(reportData);
+      res.send(result);
+    });
+
+    
     // Send a ping to confirm a successful connection
 
     console.log(
