@@ -149,14 +149,23 @@ async function run() {
 
     //get all post sort by date
     app.get("/posts", async (req, res) => {
-      const size = parseFloat(req.query.size);
-      const page = parseFloat(req.query.page)-1;
+      const size = parseFloat(req.query.size) || 5;
+      const page = parseFloat(req.query.page) - 1;
+      const searchText = req.query.search || "";
+      let query = {};
+      if (searchText && searchText !== "null") {
+        query = {
+          tag: { $regex: searchText, $options: "i" },
+        };
+      }
+
       const posts = await postCollection
-        .find()
+        .find(query)
         .skip(page * size)
         .limit(size)
         .sort({ time: -1 })
         .toArray();
+
       const postsWithComments = await Promise.all(
         posts.map(async (post) => {
           const commentsCount = await commentsCollection.countDocuments({
@@ -170,15 +179,12 @@ async function run() {
 
     //get post count
     app.get("/postsCount", async (req, res) => {
-      // const search = req.query.search || "";
+      const search = req.query.search || "";
+      const query = {
+        tag: { $regex: search, $options: "i" },
+      };
 
-      // console.log(search);
-
-      // const query = {
-      //   name: { $regex: search, $options: "i" },
-      // };
-
-      const count = await postCollection.countDocuments();
+      const count = await postCollection.countDocuments(query);
       res.send({ count });
     });
 
