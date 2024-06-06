@@ -62,6 +62,9 @@ async function run() {
       .collection("announcements");
     const paymentsCollection = client.db("chatSphere").collection("payments");
     const reportsCollection = client.db("chatSphere").collection("reports");
+    const searchTextCollection = client
+      .db("chatSphere")
+      .collection("searchText");
 
     //jwt generate
     app.post("/jwt", async (req, res) => {
@@ -444,9 +447,14 @@ async function run() {
     });
 
     //save Search Word
-    // app.post('/search',async(req,res)=>{
-
-    // })
+    app.post("/search", async (req, res) => {
+      const searchText = req.body;
+      const query = { search: searchText.search };
+      const isExists = await searchTextCollection.find(query);
+      if (isExists) return;
+      const result = await searchTextCollection.insertOne(searchText);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
 
