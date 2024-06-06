@@ -367,7 +367,12 @@ async function run() {
       res.send(result);
     });
 
-    
+    //get report
+    app.get("/reports", async (req, res) => {
+      const result = await reportsCollection.find().toArray();
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
 
     console.log(
