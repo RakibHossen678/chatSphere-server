@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 require("dotenv").config();
 const cors = require("cors");
+// const nodemailer = require("nodemailer");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const stripe = require("stripe")(process.env.VITE_STRIPE_SECRET_KEY);
@@ -89,6 +90,40 @@ async function run() {
         .send({ success: true });
     });
 
+    //send email
+    // const sendEMail = (emailAddress, emailData) => {
+    //   const transporter = nodemailer.createTransport({
+    //     service: "",
+    //     host: "smtp.gmail.email",
+    //     port: 587,
+    //     secure: false,
+    //     auth: {
+    //       user: process.env.TRANSPORTER_EMAIL,
+    //       pass: process.env.TRANSPORTER_PASS,
+    //     },
+    //   });
+    //   // verify connection configuration
+    //   transporter.verify(function (error, success) {
+    //     if (error) {
+    //       console.log(error);
+    //     } else {
+    //       console.log("Server is ready to take our messages");
+    //     }
+    //   });
+    //   const mailBody = {
+    //     from: `"ChatSphere" <${process.env.TRANSPORTER_EMAIL}>`,
+    //     to: emailAddress,
+    //     subject: emailData.subject,
+    //     html: emailData.message,
+    //   };
+    //   transporter.sendMail(mailBody, (error, info) => {
+    //     if (error) {
+    //       console.log(error);
+    //     } else {
+    //       console.log(info.response);
+    //     }
+    //   });
+    // };
     //save post in database
     app.post("/post", verifyToken, async (req, res) => {
       const postData = req.body;
@@ -370,6 +405,14 @@ async function run() {
     //get report
     app.get("/reports", async (req, res) => {
       const result = await reportsCollection.find().toArray();
+      res.send(result);
+    });
+
+    //delete reported comments
+    app.delete("/report/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await commentsCollection.deleteOne(query);
       res.send(result);
     });
 
