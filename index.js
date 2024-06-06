@@ -149,7 +149,14 @@ async function run() {
 
     //get all post sort by date
     app.get("/posts", async (req, res) => {
-      const posts = await postCollection.find().sort({ time: -1 }).toArray();
+      const size = parseFloat(req.query.size);
+      const page = parseFloat(req.query.page)-1;
+      const posts = await postCollection
+        .find()
+        .skip(page * size)
+        .limit(size)
+        .sort({ time: -1 })
+        .toArray();
       const postsWithComments = await Promise.all(
         posts.map(async (post) => {
           const commentsCount = await commentsCollection.countDocuments({
@@ -159,6 +166,20 @@ async function run() {
         })
       );
       res.send(postsWithComments);
+    });
+
+    //get post count
+    app.get("/postsCount", async (req, res) => {
+      // const search = req.query.search || "";
+
+      // console.log(search);
+
+      // const query = {
+      //   name: { $regex: search, $options: "i" },
+      // };
+
+      const count = await postCollection.countDocuments();
+      res.send({ count });
     });
 
     //get post by id
@@ -415,6 +436,11 @@ async function run() {
       const result = await commentsCollection.deleteOne(query);
       res.send(result);
     });
+
+    //save Search Word
+    // app.post('/search',async(req,res)=>{
+
+    // })
 
     // Send a ping to confirm a successful connection
 
