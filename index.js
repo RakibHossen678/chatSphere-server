@@ -146,7 +146,6 @@ async function run() {
         },
       });
       const postCount = await postCollection.countDocuments(postQuery);
-      console.log(postCount);
       res.send({ badge, postCount });
     });
 
@@ -155,6 +154,8 @@ async function run() {
       const size = parseFloat(req.query.size) || 5;
       const page = parseFloat(req.query.page) - 1;
       const searchText = req.query.search || "";
+      const sortValue = req.query.sort || "";
+
       let query = {};
       if (searchText && searchText !== "null") {
         query = {
@@ -162,22 +163,51 @@ async function run() {
         };
       }
 
-      const posts = await postCollection
-        .find(query)
-        .skip(page * size)
-        .limit(size)
-        .sort({ time: -1 })
-        .toArray();
+      if (sortValue && sortValue !== "null") {
+        const posts = await postCollection
+          .aggregate([
+            { $match: query },
+            {
+              $addFields: {
+                voteDifference: { $subtract: ["$upVote", "$downVote"] },
+              },
+            },
+            {
+              $sort: { voteDifference: -1 },
+            },
+            { $skip: page * size },
+            { $limit: size },
+          ])
+          .toArray();
+        const postsWithComments = await Promise.all(
+          posts.map(async (post) => {
+            const commentsCount = await commentsCollection.countDocuments({
+              postTitle: post.title,
+            });
+            return { ...post, commentsCount };
+          })
+        );
 
-      const postsWithComments = await Promise.all(
-        posts.map(async (post) => {
-          const commentsCount = await commentsCollection.countDocuments({
-            postTitle: post.title,
-          });
-          return { ...post, commentsCount };
-        })
-      );
-      res.send(postsWithComments);
+        res.send(postsWithComments);
+      } else {
+        const posts = await postCollection
+          .find(query)
+          .skip(page * size)
+          .limit(size)
+          .sort({ time: -1 })
+          .toArray();
+
+        const postsWithComments = await Promise.all(
+          posts.map(async (post) => {
+            const commentsCount = await commentsCollection.countDocuments({
+              postTitle: post.title,
+            });
+            return { ...post, commentsCount };
+          })
+        );
+
+        res.send(postsWithComments);
+      }
     });
 
     //get post count
