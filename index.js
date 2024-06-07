@@ -456,6 +456,11 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/search", async (req, res) => {
+      const result = await searchTextCollection.find().toArray();
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
 
     console.log(
