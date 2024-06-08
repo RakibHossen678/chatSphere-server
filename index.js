@@ -10,7 +10,11 @@ const port = process.env.port || 5000;
 
 // middleware
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://chatspher.web.app",
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -22,13 +26,13 @@ app.use(cookieParser());
 // Verify Token Middleware
 const verifyToken = async (req, res, next) => {
   const token = req.cookies?.token;
-  console.log(token);
+  // console.log(token);
   if (!token) {
     return res.status(401).send({ message: "unauthorized access" });
   }
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
-      console.log(err);
+      // console.log(err);
       return res.status(401).send({ message: "unauthorized access" });
     }
     req.user = decoded;
@@ -138,7 +142,7 @@ async function run() {
       const email = req.params.email;
       const query = { email: email };
       const postQuery = { "author.email": email };
-      console.log(email);
+      // console.log(email);
       const badge = await usersCollection.findOne(query, {
         projection: {
           badge: 1,
@@ -344,13 +348,13 @@ async function run() {
       const page = parseFloat(req.query.page) - 1;
       const search = req.query.search || "";
 
-      console.log(search);
+      // console.log(search);
 
       const query = {
         name: { $regex: search, $options: "i" },
       };
-      console.log(query);
-      console.log(query);
+      // console.log(query);
+      // console.log(query);
       const result = await usersCollection
         .find(query)
         .skip(page * size)
@@ -422,7 +426,7 @@ async function run() {
     app.get("/usersCount", async (req, res) => {
       const search = req.query.search || "";
 
-      console.log(search);
+      // console.log(search);
 
       const query = {
         name: { $regex: search, $options: "i" },
